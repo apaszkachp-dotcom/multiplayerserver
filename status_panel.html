@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin Panel</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#070809;--bg2:#0d1117;--bg3:#161b22;--bg4:#1c2128;
+  --border:#21262d;--border2:#30363d;
+  --text:#e6edf3;--text2:#8b949e;--text3:#484f58;
+  --green:#3fb950;--red:#f85149;--amber:#d29922;--blue:#58a6ff;--purple:#bc8cff;
+  --mp:#2563eb;--api:#7c3aed;--wall:#d97706;--login:#059669;--hub:#4f46e5;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:13px}
+body{display:flex;flex-direction:column;overflow:hidden}
+
+/* TOPBAR */
+#topbar{background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:12px;height:46px;flex-shrink:0}
+.logo{font-size:14px;font-weight:700;color:#fff;display:flex;align-items:center;gap:7px}
+.logo span{color:var(--blue)}
+#hub-dot{width:8px;height:8px;border-radius:50%;background:var(--red);transition:background .3s}
+#hub-dot.on{background:var(--green);box-shadow:0 0 5px var(--green)}
+.hub-url{font-family:monospace;font-size:11px;color:var(--text3);background:var(--bg3);padding:2px 8px;border-radius:4px}
+.topstats{display:flex;gap:18px;margin-left:auto}
+.ts{text-align:center}
+.tsv{font-size:17px;font-weight:700;color:#fff}
+.tsl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em}
+#clock{font-family:monospace;font-size:12px;color:var(--text2)}
+
+/* TABS */
+#tabs{background:var(--bg2);border-bottom:1px solid var(--border);display:flex;padding:0 16px;gap:2px;flex-shrink:0}
+.tab{padding:8px 15px;font-size:12px;font-weight:600;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;user-select:none}
+.tab:hover{color:var(--text2)}.tab.on{color:var(--blue);border-bottom-color:var(--blue)}
+
+/* CONTENT */
+#content{flex:1;overflow:hidden;display:flex}
+.pane{display:none;width:100%;height:100%;overflow:hidden}
+.pane.on{display:flex}
+
+/* ══ DASHBOARD ══ */
+#p-dash{gap:0}
+#dash-sb{width:210px;background:var(--bg2);border-right:1px solid var(--border);overflow-y:auto;flex-shrink:0;padding:10px 0}
+#dash-sb::-webkit-scrollbar{width:3px}
+#dash-sb::-webkit-scrollbar-thumb{background:var(--border2)}
+.sb-lbl{padding:5px 12px 2px;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text3)}
+.sr{padding:7px 12px;border-left:2px solid transparent;transition:all .12s}
+.sr:hover{background:rgba(255,255,255,.03)}
+.sr-top{display:flex;align-items:center;gap:5px}
+.sd{width:7px;height:7px;border-radius:50%;flex-shrink:0;transition:all .3s}
+.sd.on{box-shadow:0 0 5px currentColor}
+.sr-name{font-size:12px;font-weight:600;color:var(--text)}
+.sr-port{margin-left:auto;font-family:monospace;font-size:10px;color:var(--text3)}
+.sr-meta{font-size:10px;color:var(--text3);padding-left:12px;margin-top:2px}
+.sr-btns{display:flex;gap:3px;padding-left:12px;margin-top:3px;opacity:0;transition:opacity .12s}
+.sr:hover .sr-btns{opacity:1}
+#dash-sb hr{border:none;border-top:1px solid var(--border);margin:7px 12px}
+.sb-acts{padding:6px 12px;display:flex;flex-direction:column;gap:5px}
+
+#dash-main{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px}
+#dash-main::-webkit-scrollbar{width:4px}
+#dash-main::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+#dash-right{width:248px;background:var(--bg2);border-left:1px solid var(--border);overflow-y:auto;flex-shrink:0}
+#dash-right::-webkit-scrollbar{width:3px}
+#dash-right::-webkit-scrollbar-thumb{background:var(--border2)}
+
+/* Cards */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:13px 15px}
+.card-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+.card-t{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3)}
+.card-v{font-size:26px;font-weight:700;color:#fff;line-height:1}
+.card-s{font-size:10px;color:var(--text3);margin-top:2px}
+
+/* Chart */
+.chart-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:13px 15px}
+.chart-t{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:10px}
+#act-chart{width:100%;height:65px}
+
+/* Table */
+.tbl-box{background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.tbl-hdr{padding:8px 13px;border-bottom:1px solid var(--border);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);display:flex;justify-content:space-between;align-items:center}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:6px 12px;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);background:var(--bg3);border-bottom:1px solid var(--border)}
+td{padding:7px 12px;border-bottom:1px solid var(--border);color:var(--text2);font-size:12px}
+tr:last-child td{border-bottom:none}tr:hover td{background:rgba(255,255,255,.015)}
+
+/* Right panel */
+.rp-sec{padding:11px 13px;border-bottom:1px solid var(--border)}
+.rp-t{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:9px;display:flex;justify-content:space-between;align-items:center}
+.pr{display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border)}
+.pr:last-child{border:none}
+.pav{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.pname{font-size:12px;font-weight:600;color:var(--text)}
+.psub{font-size:10px;color:var(--text3)}
+.pid{font-family:monospace;font-size:10px;color:var(--text3);background:var(--bg3);padding:1px 5px;border-radius:3px;margin-left:auto}
+.arow{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)}
+.arow:last-child{border:none}
+.ak{font-family:monospace;font-size:11px;color:var(--text2)}
+.av{font-family:monospace;font-size:12px;font-weight:700;color:#fff}
+@keyframes flash{0%{color:var(--amber)}100%{color:#fff}}
+.flashed{animation:flash .5s ease}
+
+/* Logs */
+.log-box{background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.log-hdr{padding:7px 13px;border-bottom:1px solid var(--border);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);display:flex;align-items:center;gap:7px}
+.log-body{height:125px;overflow-y:auto;padding:7px 13px;font-family:monospace;font-size:11px;line-height:1.65}
+.log-body::-webkit-scrollbar{width:3px}
+.log-body::-webkit-scrollbar-thumb{background:var(--border2)}
+.ll{color:var(--text2)}.ll.err{color:var(--red)}.ll.warn{color:var(--amber)}.ll.ok{color:var(--green)}.ll.sys{color:var(--blue)}.ll.adm{color:var(--purple)}
+
+/* ══ ROOMS ══ */
+#p-rooms{flex-direction:column;overflow:hidden}
+#rooms-tb{padding:9px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;background:var(--bg2)}
+#rooms-list{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+#rooms-list::-webkit-scrollbar{width:4px}
+#rooms-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.room-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.room-hdr{padding:9px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px}
+.room-name{font-size:14px;font-weight:700;color:#fff}
+.room-body{padding:12px 14px;display:flex;gap:16px}
+.room-info{min-width:150px;display:flex;flex-direction:column;gap:5px}
+.ri{font-size:12px;color:var(--text2)}.ri b{color:var(--text)}
+.room-acts{flex:1;display:flex;flex-direction:column;gap:6px}
+.room-acts-row{display:flex;gap:6px;flex-wrap:wrap}
+.room-players{flex:1}
+
+/* ══ ADMIN LOG ══ */
+#p-admin{flex-direction:column;overflow:hidden}
+.admin-tb{padding:9px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;background:var(--bg2)}
+#admin-log-list{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+#admin-log-list::-webkit-scrollbar{width:4px}
+#admin-log-list::-webkit-scrollbar-thumb{background:var(--border2)}
+.ae{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:8px 12px;display:flex;align-items:center;gap:10px}
+.ae-time{font-family:monospace;font-size:11px;color:var(--text3);flex-shrink:0;min-width:65px}
+.ae-act{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;flex-shrink:0}
+.ae-detail{font-size:11px;color:var(--text2);flex:1}
+
+/* ══ CONFIG ══ */
+#p-config{flex-direction:column;overflow:hidden}
+#config-body{flex:1;overflow-y:auto;padding:18px;display:grid;grid-template-columns:1fr 1fr;gap:14px;align-content:start}
+#config-body::-webkit-scrollbar{width:4px}
+#config-body::-webkit-scrollbar-thumb{background:var(--border2)}
+.cfg-sec{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:15px}
+.cfg-title{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:13px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.cfg-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)}
+.cfg-row:last-child{border:none}
+.cfg-lbl{font-size:12px;color:var(--text2)}
+.cfg-inp{background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-size:12px;padding:4px 8px;border-radius:5px;outline:none;width:110px;text-align:right;transition:border-color .15s}
+.cfg-inp:focus{border-color:var(--blue)}
+.cfg-chk{width:15px;height:15px;accent-color:var(--blue);cursor:pointer}
+.cfg-footer{grid-column:1/-1;display:flex;justify-content:flex-end;gap:8px}
+
+/* Shared */
+.btn{padding:4px 12px;border-radius:5px;font-size:11px;font-weight:600;border:none;cursor:pointer;transition:all .15s;font-family:inherit;white-space:nowrap}
+.b-g{background:rgba(63,185,80,.14);color:var(--green);border:1px solid rgba(63,185,80,.3)}.b-g:hover{background:rgba(63,185,80,.26)}
+.b-r{background:rgba(248,81,73,.12);color:var(--red);border:1px solid rgba(248,81,73,.25)}.b-r:hover{background:rgba(248,81,73,.24)}
+.b-a{background:rgba(210,153,34,.12);color:var(--amber);border:1px solid rgba(210,153,34,.25)}.b-a:hover{background:rgba(210,153,34,.24)}
+.b-b{background:rgba(88,166,255,.1);color:var(--blue);border:1px solid rgba(88,166,255,.2)}.b-b:hover{background:rgba(88,166,255,.2)}
+.b-gr{background:var(--bg3);color:var(--text2);border:1px solid var(--border2)}.b-gr:hover{background:var(--bg4);color:var(--text)}
+.b-p{background:rgba(188,140,255,.1);color:var(--purple);border:1px solid rgba(188,140,255,.2)}.b-p:hover{background:rgba(188,140,255,.2)}
+.inp{background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-size:12px;padding:5px 9px;border-radius:5px;outline:none;font-family:inherit}
+.inp:focus{border-color:var(--blue)}.inp::placeholder{color:var(--text3)}
+.sel{background:var(--bg3);border:1px solid var(--border2);color:var(--text2);font-size:12px;padding:4px 7px;border-radius:5px;outline:none;cursor:pointer}
+.badge{display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:700}
+.bg{background:rgba(63,185,80,.12);color:var(--green);border:1px solid rgba(63,185,80,.25)}
+.br{background:rgba(248,81,73,.1);color:var(--red);border:1px solid rgba(248,81,73,.2)}
+.bp{background:rgba(188,140,255,.12);color:var(--purple);border:1px solid rgba(188,140,255,.25)}
+.bb{background:rgba(88,166,255,.1);color:var(--blue);border:1px solid rgba(88,166,255,.2)}
+.bgr{background:rgba(139,148,158,.1);color:var(--text2);border:1px solid rgba(139,148,158,.2)}
+.ba{background:rgba(210,153,34,.1);color:var(--amber);border:1px solid rgba(210,153,34,.2)}
+.empty{padding:18px;text-align:center;color:var(--text3);font-size:12px}
+
+/* Modal */
+#modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;align-items:center;justify-content:center}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:22px;width:340px}
+.modal-title{font-size:14px;font-weight:700;color:#fff;margin-bottom:16px}
+.mrow{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.mrow label{font-size:11px;color:var(--text3)}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+</style>
+</head>
+<body>
+
+<header id="topbar">
+  <div class="logo"><div id="hub-dot"></div>⬡ Admin <span>Panel</span></div>
+  <div class="hub-url">ws://localhost:1000</div>
+  <div class="topstats">
+    <div class="ts"><div class="tsv" id="t-srv">0</div><div class="tsl">Serwery</div></div>
+    <div class="ts"><div class="tsv" id="t-pl">0</div><div class="tsl">Gracze</div></div>
+    <div class="ts"><div class="tsv" id="t-rooms">0</div><div class="tsl">Pokoje</div></div>
+    <div class="ts"><div class="tsv" id="t-up">—</div><div class="tsl">Uptime</div></div>
+  </div>
+  <div id="clock"></div>
+</header>
+
+<div id="tabs">
+  <div class="tab on"  onclick="tab('dash')">📊 Dashboard</div>
+  <div class="tab"     onclick="tab('rooms')">🚪 Pokoje</div>
+  <div class="tab"     onclick="tab('admin')">🛡 Admin log</div>
+  <div class="tab"     onclick="tab('config')">⚙ Konfiguracja</div>
+</div>
+
+<div id="content">
+
+  <!-- ══ DASHBOARD ══ -->
+  <div class="pane on" id="p-dash">
+    <aside id="dash-sb">
+      <div class="sb-lbl">Serwery</div>
+      <div id="srv-list"></div>
+      <hr style="border:none;border-top:1px solid var(--border);margin:7px 12px">
+      <div class="sb-lbl">Akcje globalne</div>
+      <div class="sb-acts">
+        <button class="btn b-g" onclick="startAll()">▶ Start wszystkich</button>
+        <button class="btn b-a" onclick="stopAll()">■ Stop (bez Huba)</button>
+        <button class="btn b-gr" onclick="restartAll()">↺ Restart wszystkich</button>
+      </div>
+    </aside>
+
+    <div id="dash-main">
+      <div class="cards" id="stat-cards"></div>
+      <div class="chart-wrap">
+        <div class="chart-t">Aktywność graczy — ostatnie 60s</div>
+        <canvas id="act-chart"></canvas>
+      </div>
+      <div class="tbl-box">
+        <div class="tbl-hdr">
+          <span>Podłączeni gracze</span>
+          <span id="pl-cnt" style="color:var(--text3);font-size:11px"></span>
+        </div>
+        <table>
+          <thead><tr><th>Nick</th><th>Pokój</th><th>Ping</th><th>Rola</th><th>Godz. dołączenia</th><th>Akcje</th></tr></thead>
+          <tbody id="pl-body"><tr><td colspan="6" class="empty">Brak graczy</td></tr></tbody>
+        </table>
+      </div>
+      <div class="log-box">
+        <div class="log-hdr">
+          <span>Logi</span>
+          <select class="sel" id="log-f" onchange="renderLogs()" style="font-size:10px;padding:2px 6px">
+            <option value="all">Wszystkie</option>
+            <option value="err">Błędy</option>
+            <option value="ok">OK</option>
+            <option value="adm">Admin</option>
+          </select>
+          <button class="btn b-gr" style="margin-left:auto;font-size:10px;padding:2px 8px" onclick="clearLogs()">Wyczyść</button>
+        </div>
+        <div class="log-body" id="log-body"></div>
+      </div>
+    </div>
+
+    <aside id="dash-right">
+      <div class="rp-sec">
+        <div class="rp-t">Gracze online</div>
+        <div id="rp-players"><div class="empty">Brak</div></div>
+      </div>
+      <div class="rp-sec">
+        <div class="rp-t">API live
+          <button class="btn b-r" style="font-size:9px;padding:1px 7px" onclick="resetApi()">Reset</button>
+        </div>
+        <div id="rp-api"><div class="empty">Brak</div></div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- ══ ROOMS ══ -->
+  <div class="pane" id="p-rooms">
+    <div id="rooms-tb">
+      <button class="btn b-g" onclick="openModal()">+ Nowy pokój</button>
+      <button class="btn b-gr" onclick="reqRooms()">↻ Odśwież</button>
+      <span id="rooms-cnt" style="color:var(--text3);font-size:11px;margin-left:auto"></span>
+    </div>
+    <div id="rooms-list"><div class="empty">Brak pokoi lub MP offline</div></div>
+  </div>
+
+  <!-- ══ ADMIN LOG ══ -->
+  <div class="pane" id="p-admin">
+    <div class="admin-tb">
+      <span style="font-size:12px;color:var(--text2)">Historia akcji administracyjnych</span>
+      <button class="btn b-gr" style="margin-left:auto" onclick="adminLog=[];renderAdminLog()">Wyczyść</button>
+      <span id="adm-cnt" style="color:var(--text3);font-size:11px"></span>
+    </div>
+    <div id="admin-log-list"><div class="empty">Brak akcji</div></div>
+  </div>
+
+  <!-- ══ CONFIG ══ -->
+  <div class="pane" id="p-config">
+    <div id="config-body">
+      <div class="cfg-sec">
+        <div class="cfg-title">Multiplayer Server</div>
+        <div class="cfg-row"><span class="cfg-lbl">Chat — max wiadomości</span><input class="cfg-inp" id="c-chat-rate" type="number" value="5"></div>
+        <div class="cfg-row"><span class="cfg-lbl">Chat — okno czasu (s)</span><input class="cfg-inp" id="c-chat-win" type="number" step="0.5" value="3.0"></div>
+        <div class="cfg-row"><span class="cfg-lbl">Max długość wiadomości</span><input class="cfg-inp" id="c-chat-len" type="number" value="256"></div>
+        <div class="cfg-row"><span class="cfg-lbl">Max graczy w pokoju (0=∞)</span><input class="cfg-inp" id="c-max-pl" type="number" value="0"></div>
+        <div class="cfg-row"><span class="cfg-lbl">Max pokojów (0=∞)</span><input class="cfg-inp" id="c-max-rooms" type="number" value="0"></div>
+        <div class="cfg-row"><span class="cfg-lbl">Loguj pozycje graczy</span><input class="cfg-chk" id="c-log-pos" type="checkbox" checked></div>
+        <div class="cfg-row"><span class="cfg-lbl">Interwał logów pozycji (s)</span><input class="cfg-inp" id="c-pos-int" type="number" step="1" value="5"></div>
+      </div>
+      <div class="cfg-sec">
+        <div class="cfg-title">Wall Server</div>
+        <div class="cfg-row"><span class="cfg-lbl">Domyślne HP ściany</span><input class="cfg-inp" id="c-wall-hp" type="number" value="100"></div>
+        <div class="cfg-row"><span class="cfg-lbl">HP tylko maleje</span><input class="cfg-chk" id="c-wall-dec" type="checkbox" checked></div>
+        <div class="cfg-row"><span class="cfg-lbl">Próg vis 1 (rysy, HP&lt;)</span><input class="cfg-inp" id="c-vis1" type="number" value="60"></div>
+        <div class="cfg-row"><span class="cfg-lbl">Próg vis 2 (gruz, HP&lt;)</span><input class="cfg-inp" id="c-vis2" type="number" value="20"></div>
+      </div>
+      <div class="cfg-sec">
+        <div class="cfg-title">Porty serwerów</div>
+        <div class="cfg-row"><span class="cfg-lbl">Hub</span><input class="cfg-inp" id="c-port-hub" type="number" value="1000"></div>
+        <div class="cfg-row"><span class="cfg-lbl">Multiplayer</span><input class="cfg-inp" id="c-port-mp" type="number" value="8765"></div>
+        <div class="cfg-row"><span class="cfg-lbl">API</span><input class="cfg-inp" id="c-port-api" type="number" value="8766"></div>
+        <div class="cfg-row"><span class="cfg-lbl">Wall</span><input class="cfg-inp" id="c-port-wall" type="number" value="8767"></div>
+        <div class="cfg-row"><span class="cfg-lbl">Login</span><input class="cfg-inp" id="c-port-login" type="number" value="8768"></div>
+        <div style="margin-top:8px;font-size:10px;color:var(--text3)">Zmiana portów wymaga restartu serwerów.</div>
+      </div>
+      <div class="cfg-sec">
+        <div class="cfg-title">Zarządzanie danymi</div>
+        <div class="cfg-row"><span class="cfg-lbl">Reset wszystkich danych API</span>
+          <button class="btn b-r" onclick="resetApi()">Reset API</button>
+        </div>
+        <div class="cfg-row"><span class="cfg-lbl">Reset konkretnego klucza</span>
+          <div style="display:flex;gap:5px">
+            <input class="inp" id="c-api-key" placeholder="kills_1" style="width:90px">
+            <button class="btn b-a" onclick="resetApiKey()">Reset</button>
+          </div>
+        </div>
+        <div class="cfg-row"><span class="cfg-lbl">Reset ścian (wszystkie pokoje)</span>
+          <button class="btn b-a" onclick="adminCmd({type:'admin_reset_walls',room:'*'})">Reset ścian</button>
+        </div>
+      </div>
+      <div class="cfg-footer">
+        <button class="btn b-gr" onclick="addLog('Konfiguracja wczytana z domyślnych','sys')">↺ Resetuj</button>
+        <button class="btn b-b"  onclick="saveToml()">💾 Zapisz .toml</button>
+        <button class="btn b-g"  onclick="applyConfig()">✓ Zastosuj live</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL NOWY POKÓJ -->
+<div id="modal-bg">
+  <div class="modal">
+    <div class="modal-title">Nowy pokój</div>
+    <div class="mrow"><label>Nazwa pokoju *</label><input class="inp" id="m-name" placeholder="room1" style="width:100%"></div>
+    <div class="mrow"><label>Hasło (opcjonalne)</label><input class="inp" id="m-pw" placeholder="brak" style="width:100%"></div>
+    <div class="mrow"><label>ID mapy (opcjonalne)</label><input class="inp" id="m-map" placeholder="np. las_01" style="width:100%"></div>
+    <div class="modal-btns">
+      <button class="btn b-gr" onclick="closeModal()">Anuluj</button>
+      <button class="btn b-g"  onclick="createRoom()">Utwórz pokój</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const HUB = "ws://localhost:1000";
+const API = "ws://localhost:8766";
+
+let hubWs=null, apiWs=null;
+let hubStatus={}, players={}, apiData={}, lastApi={};
+let rooms={}, logs=[], adminLog=[];
+let activity=new Array(60).fill(0);
+let avColors=["#2563eb","#7c3aed","#d97706","#059669","#e11d48","#0891b2","#db2777"];
+const SC={mp:"#2563eb",api:"#7c3aed",wall:"#d97706",login:"#059669",hub:"#4f46e5"};
+const SN={mp:"Multiplayer",api:"API",wall:"Wall",login:"Login",hub:"Hub"};
+const SP={hub:1000,mp:8765,api:8766,wall:8767,login:8768};
+const ALL=["hub","mp","api","wall","login"];
+
+// Clock
+setInterval(()=>document.getElementById("clock").textContent=new Date().toLocaleTimeString("pl"),1000);
+
+// Tabs
+function tab(id){
+  document.querySelectorAll(".tab").forEach((t,i)=>t.classList.toggle("on",["dash","rooms","admin","config"][i]===id));
+  document.querySelectorAll(".pane").forEach(p=>p.classList.remove("on"));
+  document.getElementById("p-"+id).classList.add("on");
+  if(id==="rooms") reqRooms();
+}
+
+// Logs
+function addLog(text,cls=""){
+  const t=new Date().toLocaleTimeString("pl");
+  logs.push({t,text,cls});if(logs.length>300)logs.shift();renderLogs();
+}
+function renderLogs(){
+  const f=document.getElementById("log-f").value;
+  const b=document.getElementById("log-body");
+  const items=f==="all"?logs:logs.filter(l=>l.cls===f);
+  b.innerHTML=items.slice(-80).map(l=>`<div class="ll ${l.cls}"><span style="color:var(--text3)">[${l.t}]</span> ${l.text}</div>`).join("");
+  b.scrollTop=b.scrollHeight;
+}
+function clearLogs(){logs=[];renderLogs();}
+
+// Admin log
+function addAdminEntry(m){
+  const ts=m.time||new Date().toLocaleTimeString("pl");
+  adminLog.unshift({time:ts,action:m.action||"?",data:m.data||{}});
+  if(adminLog.length>300)adminLog.pop();
+  renderAdminLog();
+}
+function renderAdminLog(){
+  document.getElementById("adm-cnt").textContent=adminLog.length+" akcji";
+  const el=document.getElementById("admin-log-list");
+  if(!adminLog.length){el.innerHTML=`<div class="empty">Brak akcji admina</div>`;return;}
+  const cm={KICK:"br",BAN:"bp",MAP:"bb",STATUS:"ba",BROADCAST:"bg",
+    CREATE_ROOM:"bb",DELETE_ROOM:"br",RESET_WALLS:"ba",RESET_API:"br"};
+  el.innerHTML=adminLog.map(e=>{
+    const badge=`<span class="badge ${cm[e.action]||"bgr"}">${e.action}</span>`;
+    const detail=Object.entries(e.data||{}).filter(([k])=>!["type","from","action"].includes(k))
+      .map(([k,v])=>`<b style="color:var(--text)">${k}:</b> ${v}`).join("  ·  ");
+    return `<div class="ae"><span class="ae-time">${e.time}</span>${badge}<span class="ae-detail">${detail}</span></div>`;
+  }).join("");
+}
+
+// Chart
+function pushAct(n){activity.push(n);if(activity.length>60)activity.shift();drawChart();}
+function drawChart(){
+  const c=document.getElementById("act-chart");if(!c)return;
+  const ctx=c.getContext("2d"),W=c.width=c.offsetWidth,H=c.height=65;
+  ctx.clearRect(0,0,W,H);
+  const max=Math.max(...activity,1),step=W/(activity.length-1);
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,"rgba(88,166,255,.18)");g.addColorStop(1,"rgba(88,166,255,.01)");
+  ctx.beginPath();ctx.moveTo(0,H);
+  activity.forEach((v,i)=>ctx.lineTo(i*step,H-(v/max)*(H-5)));
+  ctx.lineTo(W,H);ctx.closePath();ctx.fillStyle=g;ctx.fill();
+  ctx.beginPath();
+  activity.forEach((v,i)=>i===0?ctx.moveTo(0,H-(v/max)*(H-5)):ctx.lineTo(i*step,H-(v/max)*(H-5)));
+  ctx.strokeStyle="#58a6ff";ctx.lineWidth=1.5;ctx.stroke();
+  // grid
+  ctx.strokeStyle="rgba(255,255,255,.04)";ctx.lineWidth=1;
+  [.33,.66].forEach(f=>{const y=H-f*(H-5);ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();});
+}
+setInterval(()=>pushAct(Object.keys(players).length),1000);
+setInterval(drawChart,2000);
+
+// Sidebar
+function renderSidebar(){
+  const srvs=hubStatus.servers||{};
+  document.getElementById("srv-list").innerHTML=ALL.map(id=>{
+    const info=srvs[id]||{},online=!!info.online,col=SC[id],hub=id==="hub";
+    return `<div class="sr">
+      <div class="sr-top">
+        <div class="sd ${online?"on":""}" style="background:${online?col:"#484f58"};color:${col}"></div>
+        <span class="sr-name">${SN[id]}</span><span class="sr-port">:${SP[id]}</span>
+      </div>
+      <div class="sr-meta">${online?`online · ↑${fmtUp(info.uptime||0)} · 👥${info.clients||0}`:"offline"}</div>
+      <div class="sr-btns">
+        <button class="btn b-g" style="padding:2px 7px;font-size:10px" ${online?"disabled":""} onclick="cmd('${id}','start')">▶</button>
+        <button class="btn b-r" style="padding:2px 7px;font-size:10px" ${(!online||hub)?"disabled":""} onclick="cmd('${id}','stop')">■</button>
+        <button class="btn b-a" style="padding:2px 7px;font-size:10px" onclick="cmd('${id}','restart')">↺</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+// Stat cards
+function renderCards(){
+  const srvs=hubStatus.servers||{};
+  document.getElementById("stat-cards").innerHTML=Object.entries(srvs).map(([id,info])=>
+    `<div class="card" style="border-left:3px solid ${SC[id]||"#888"}">
+      <div class="card-hdr"><span class="card-t">${SN[id]||id}</span><span class="badge bg">online</span></div>
+      <div class="card-v">${info.clients||0}</div>
+      <div class="card-s">graczy · ${fmtUp(info.uptime||0)}</div>
+    </div>`).join("")||`<div class="empty" style="grid-column:1/-1">Brak serwerów online</div>`;
+}
+
+// Players
+let joinTimes={};
+function renderPlayers(){
+  const now=new Date().toLocaleTimeString("pl");
+  const ent=Object.entries(players);
+  document.getElementById("pl-cnt").textContent=ent.length+" graczy";
+  document.getElementById("pl-body").innerHTML=ent.length?ent.map(([nick,p])=>{
+    if(!joinTimes[nick]) joinTimes[nick]=now;
+    const roleBadge=p.role==="admin"?"bp":p.role==="guest"?"bgr":"bb";
+    return `<tr>
+      <td><b style="color:var(--text)">${nick}</b></td>
+      <td>${p.room||"—"}</td>
+      <td>${p.ping!=null?p.ping+"ms":"—"}</td>
+      <td><span class="badge ${roleBadge}">${p.role||"player"}</span></td>
+      <td style="font-family:monospace;font-size:11px;color:var(--text3)">${joinTimes[nick]||"—"}</td>
+      <td>
+        <button class="btn b-a" style="padding:2px 7px;font-size:10px" onclick="kick('${nick}','${p.room||""}',false)">Kick</button>
+        <button class="btn b-p" style="padding:2px 7px;font-size:10px" onclick="kick('${nick}','${p.room||""}',true)">Ban</button>
+      </td>
+    </tr>`;
+  }).join(""):`<tr><td colspan="6" class="empty">Brak graczy</td></tr>`;
+  // Clean stale join times
+  Object.keys(joinTimes).forEach(n=>{if(!players[n])delete joinTimes[n];});
+  // Right panel
+  document.getElementById("rp-players").innerHTML=ent.length?ent.map(([nick,p],i)=>{
+    const col=avColors[i%avColors.length];
+    return `<div class="pr">
+      <div class="pav" style="background:${col}22;color:${col}">${nick.charAt(0).toUpperCase()}</div>
+      <div><div class="pname">${nick}</div><div class="psub">${p.room||"—"} · ${p.ping!=null?p.ping+"ms":"—"}</div></div>
+      <span class="pid">#${p.id||"?"}</span>
+    </div>`;
+  }).join(""):`<div class="empty">Brak</div>`;
+}
+
+// Rooms tab
+function renderRooms(){
+  const ent=Object.entries(rooms);
+  document.getElementById("rooms-cnt").textContent=ent.length+" pokoi";
+  document.getElementById("t-rooms").textContent=ent.length;
+  if(!ent.length){document.getElementById("rooms-list").innerHTML=`<div class="empty">Brak pokoi</div>`;return;}
+  const scol={waiting:["#d29922","ba"],playing:["#3fb950","bg"],finished:["#484f58","bgr"]};
+  document.getElementById("rooms-list").innerHTML=ent.map(([rid,r])=>{
+    const[sc,sb]=scol[r.status]||["#484f58","bgr"];
+    const plHtml=(r.players||[]).map(p=>`<div style="font-size:11px;color:var(--text2);padding:2px 0">
+      · <b style="color:var(--text)">${p.nick||"Gracz"}</b> ${p.ping_ms!=null?`<span style="color:var(--text3)">${p.ping_ms}ms</span>`:""}
+    </div>`).join("");
+    return `<div class="room-card">
+      <div class="room-hdr">
+        <span class="room-name">${rid}</span>
+        <span class="badge ${sb}">${r.status||"?"}</span>
+        ${r.has_password?`<span class="badge bgr">🔒</span>`:""}
+        <span style="margin-left:auto;color:var(--text3);font-size:11px">👥 ${r.player_count||0} graczy</span>
+      </div>
+      <div class="room-body">
+        <div class="room-info">
+          <div class="ri">Mapa: <b>${r.map_id||"brak"}</b></div>
+          <div class="ri">Gracze: <b>${r.player_count||0}</b></div>
+          ${plHtml}
+        </div>
+        <div class="room-acts">
+          <div class="room-acts-row">
+            <select class="sel" id="map-${rid}">
+              <option value="">-- wybierz mapę --</option>
+              <option>las_01</option><option>miasto_01</option>
+              <option>podziemia</option><option>pustynia</option>
+              <option>0</option><option>1</option><option>2</option>
+            </select>
+            <button class="btn b-b" onclick="setMap('${rid}')">Ustaw mapę</button>
+          </div>
+          <div class="room-acts-row">
+            <select class="sel" id="st-${rid}">
+              <option value="waiting">waiting</option>
+              <option value="playing">playing</option>
+              <option value="finished">finished</option>
+            </select>
+            <button class="btn b-a" onclick="setSt('${rid}')">Status</button>
+          </div>
+          <div class="room-acts-row">
+            <input class="inp" id="bc-${rid}" placeholder="Wiadomość do pokoju..." style="flex:1">
+            <button class="btn b-g" onclick="bcast('${rid}')">📢 Wyślij</button>
+          </div>
+          <div class="room-acts-row">
+            <button class="btn b-a" onclick="adminCmd({type:'admin_reset_walls',room:'${rid}'})">🧱 Reset ścian</button>
+            <button class="btn b-r" onclick="delRoom('${rid}')">🗑 Usuń pokój</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function reqRooms(){if(hubWs&&hubWs.readyState===1)hubWs.send(JSON.stringify({type:"room_list"}));}
+
+// Admin actions
+function adminCmd(p){
+  if(!hubWs||hubWs.readyState!==1){addLog("Brak połączenia z Hub!","err");return;}
+  hubWs.send(JSON.stringify(p));
+  addLog(`ADMIN: ${p.type} [${p.room||""}]`,"adm");
+}
+function kick(nick,room,ban){
+  if(!confirm(`${ban?"Zbanować":"Wyrzucić"} gracza "${nick}"?`))return;
+  adminCmd({type:"admin_kick",room,nick,ban});
+}
+function setMap(rid){
+  const v=document.getElementById("map-"+rid).value;
+  if(!v){alert("Wybierz mapę!");return;}
+  adminCmd({type:"admin_map",room:rid,map_id:v});
+}
+function setSt(rid){
+  adminCmd({type:"admin_status",room:rid,status:document.getElementById("st-"+rid).value});
+}
+function bcast(rid){
+  const t=document.getElementById("bc-"+rid).value.trim();
+  if(!t)return;
+  adminCmd({type:"admin_broadcast",room:rid,text:t});
+  document.getElementById("bc-"+rid).value="";
+}
+function delRoom(rid){
+  if(!confirm(`Usunąć pokój "${rid}" i wyrzucić wszystkich?`))return;
+  adminCmd({type:"admin_delete_room",room:rid});
+  setTimeout(reqRooms,800);
+}
+
+// Modal
+function openModal(){document.getElementById("modal-bg").style.display="flex";}
+function closeModal(){document.getElementById("modal-bg").style.display="none";}
+function createRoom(){
+  const name=document.getElementById("m-name").value.trim();
+  if(!name){alert("Podaj nazwę!");return;}
+  adminCmd({type:"admin_create_room",room:name,
+    pw:document.getElementById("m-pw").value.trim(),
+    map_id:document.getElementById("m-map").value.trim()});
+  closeModal();setTimeout(reqRooms,800);
+}
+
+// Server commands
+function cmd(name,action){
+  if(!hubWs||hubWs.readyState!==1){addLog("Brak Hub!","err");return;}
+  hubWs.send(JSON.stringify({type:"command",target:name,command:action}));
+  addLog(`CMD ${SN[name]}: ${action}`,"sys");
+}
+function startAll(){["mp","api","wall","login"].forEach(id=>cmd(id,"start"));}
+function stopAll(){["login","wall","api","mp"].forEach(id=>cmd(id,"stop"));}
+function restartAll(){["login","wall","api","mp"].forEach(id=>cmd(id,"restart"));}
+
+// API
+function renderApi(){
+  const ent=Object.entries(apiData);
+  document.getElementById("rp-api").innerHTML=ent.length?ent.map(([k,v])=>{
+    const ch=lastApi[k]!==v;
+    return `<div class="arow"><span class="ak">${k}</span><span class="av ${ch?"flashed":""}">${v}</span></div>`;
+  }).join(""):`<div class="empty">Brak</div>`;
+  lastApi={...apiData};
+}
+function resetApi(){
+  if(!apiWs||apiWs.readyState!==1){addLog("API Server offline","err");return;}
+  apiWs.send(JSON.stringify({type:"api_reset"}));
+  addLog("API reset all","adm");
+  addAdminEntry({action:"RESET_API",data:{},time:new Date().toLocaleTimeString("pl")});
+}
+function resetApiKey(){
+  const k=document.getElementById("c-api-key").value.trim();
+  if(!k){alert("Podaj klucz!");return;}
+  if(!apiWs||apiWs.readyState!==1){addLog("API offline","err");return;}
+  apiWs.send(JSON.stringify({type:"api_reset",key:k}));
+  addLog(`API reset: ${k}`,"adm");
+}
+
+// Config
+function applyConfig(){
+  const cfg={
+    chat_rate:+document.getElementById("c-chat-rate").value||5,
+    chat_window:+document.getElementById("c-chat-win").value||3,
+    chat_max_len:+document.getElementById("c-chat-len").value||256,
+    max_players:+document.getElementById("c-max-pl").value||0,
+    max_rooms:+document.getElementById("c-max-rooms").value||0,
+    log_positions:document.getElementById("c-log-pos").checked,
+    pos_interval:+document.getElementById("c-pos-int").value||5,
+    wall_hp:+document.getElementById("c-wall-hp").value||100,
+    wall_decreasing:document.getElementById("c-wall-dec").checked,
+    vis1:+document.getElementById("c-vis1").value||60,
+    vis2:+document.getElementById("c-vis2").value||20,
+  };
+  if(hubWs&&hubWs.readyState===1){
+    hubWs.send(JSON.stringify({type:"command",target:"mp",  command:"apply_config",config:cfg}));
+    hubWs.send(JSON.stringify({type:"command",target:"wall",command:"apply_config",config:cfg}));
+    addLog("Konfiguracja wysłana do serwerów","ok");
+    addAdminEntry({action:"CONFIG",data:cfg,time:new Date().toLocaleTimeString("pl")});
+    alert("✓ Zastosowano! Niektóre zmiany wymagają restartu serwera.");
+  }else addLog("Brak Hub!","err");
+}
+function saveToml(){
+  const t=`[server]\nhost = "0.0.0.0"\n\n[chat]\nrate_limit = ${document.getElementById("c-chat-rate").value||5}\nrate_window = ${document.getElementById("c-chat-win").value||3}\nmax_length = ${document.getElementById("c-chat-len").value||256}\n\n[security]\nmax_players_per_room = ${document.getElementById("c-max-pl").value||0}\nmax_rooms = ${document.getElementById("c-max-rooms").value||0}\n\n[walls]\ndefault_hp = ${document.getElementById("c-wall-hp").value||100}\nhp_only_decreasing = ${document.getElementById("c-wall-dec").checked}\nvis1_threshold = ${document.getElementById("c-vis1").value||60}\nvis2_threshold = ${document.getElementById("c-vis2").value||20}\n\n[ports]\nhub = ${document.getElementById("c-port-hub").value||1000}\nmp = ${document.getElementById("c-port-mp").value||8765}\napi = ${document.getElementById("c-port-api").value||8766}\nwall = ${document.getElementById("c-port-wall").value||8767}\nlogin = ${document.getElementById("c-port-login").value||8768}\n`;
+  const a=document.createElement("a");
+  a.href="data:text/plain;charset=utf-8,"+encodeURIComponent(t);
+  a.download="server_config.toml";a.click();
+  addLog("Zapisano server_config.toml","ok");
+}
+
+// API WS
+function connApi(){
+  try{
+    apiWs=new WebSocket(API);
+    apiWs.onopen=()=>{apiWs.send(JSON.stringify({type:"join_api",room:"panel"}));addLog("API połączono","ok");};
+    apiWs.onmessage=e=>{try{const m=JSON.parse(e.data);
+      if(m.type==="api_all"){apiData=m.data||{};renderApi();}
+      else if(m.type==="api_update"){apiData[m.key]=m.value;renderApi();}
+    }catch(e){}};
+    apiWs.onclose=()=>{addLog("API rozłączono — retry 8s","warn");setTimeout(connApi,8000);};
+    apiWs.onerror=()=>apiWs&&apiWs.close();
+  }catch(e){}
+}
+
+// Hub WS
+function collectPlayers(srvs){
+  const old=Object.keys(players);
+  players={};
+  for(const[name,info]of Object.entries(srvs)){
+    const meta=info.meta||{};
+    if(meta.players&&Array.isArray(meta.players)){
+      meta.players.forEach(p=>{
+        const nick=p.nick||`#${p.id}`;
+        players[nick]={server:name,room:p.room||"?",ping:p.ping_ms,role:p.role||"player",id:p.id};
+      });
+    }else if(info.clients>0){
+      for(let i=0;i<Math.min(info.clients,6);i++){
+        const k=`${SN[name]||name}#${i+1}`;
+        players[k]={server:name,room:"?",ping:null,role:"player",id:i+1};
+      }
+    }
+  }
+}
+
+function connHub(){
+  hubWs=new WebSocket(HUB);
+  hubWs.onopen=()=>{
+    hubWs.send(JSON.stringify({type:"panel_connect"}));
+    document.getElementById("hub-dot").classList.add("on");
+    addLog("Hub połączono","ok");
+  };
+  hubWs.onmessage=e=>{try{
+    const m=JSON.parse(e.data);
+    if(m.type==="hub_status"){
+      hubStatus=m;
+      const srvs=m.servers||{};
+      const tot=Object.values(srvs).reduce((s,v)=>s+(v.clients||0),0);
+      document.getElementById("t-srv").textContent=Object.keys(srvs).length;
+      document.getElementById("t-pl").textContent=tot;
+      document.getElementById("t-up").textContent=fmtUp(m.hub_uptime||0);
+      renderSidebar();renderCards();collectPlayers(srvs);renderPlayers();
+    }else if(m.type==="room_list"){
+      rooms=m.rooms||{};renderRooms();
+    }else if(m.type==="server_up"){
+      addLog(`▲ ${SN[m.name]||m.name} ONLINE :${m.port||""}`, "ok");
+    }else if(m.type==="server_down"){
+      addLog(`▼ ${SN[m.name]||m.name} OFFLINE`, "err");
+    }else if(m.type==="admin_log"){
+      addAdminEntry(m);
+      addLog(`ADMIN: ${m.action} [${(m.data||{}).room||""}]`,"adm");
+    }
+  }catch(e){}};
+  hubWs.onclose=()=>{
+    document.getElementById("hub-dot").classList.remove("on");
+    addLog("Hub rozłączono — retry 4s","err");
+    renderSidebar();setTimeout(connHub,4000);
+  };
+  hubWs.onerror=()=>hubWs.close();
+}
+
+function fmtUp(s){
+  if(!s&&s!==0)return"—";
+  const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;
+  return h>0?`${h}h ${m}m`:m>0?`${m}m ${sec}s`:`${sec}s`;
+}
+
+// Init
+connHub();connApi();
+renderSidebar();drawChart();
+setInterval(()=>{if(document.getElementById("p-rooms").classList.contains("on"))reqRooms();},10000);
+setInterval(()=>{if(hubWs&&hubWs.readyState===1)hubWs.send(JSON.stringify({type:"status"}));},5000);
+</script>
+</body>
+</html>
